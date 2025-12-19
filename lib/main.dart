@@ -6,28 +6,107 @@ void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = prefs.getBool('isDarkMode') ?? true;
+    });
+  }
+
+  Future<void> _toggleTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+    await prefs.setBool('isDarkMode', _isDarkMode);
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Calculadora de Impresión 3D',
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color(0xFF111827),
-        primaryColor: const Color(0xFF9333EA),
-        cardColor: const Color(0xFF1F2937),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF1F2937),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-          contentPadding: const EdgeInsets.all(16),
-        ),
+      theme: _isDarkMode ? _darkTheme() : _lightTheme(),
+      home: MainScreen(
+        isDarkMode: _isDarkMode,
+        onThemeToggle: _toggleTheme,
       ),
-      home: const MainScreen(),
+    );
+  }
+
+  ThemeData _darkTheme() {
+    return ThemeData.dark().copyWith(
+      scaffoldBackgroundColor: const Color(0xFF111827),
+      primaryColor: const Color(0xFF9333EA),
+      cardColor: const Color(0xFF1F2937),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Color(0xFF1F2937),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1F2937),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Color(0xFF1F2937),
+        selectedItemColor: Color(0xFF9333EA),
+        unselectedItemColor: Colors.white,
+      ),
+    );
+  }
+
+  ThemeData _lightTheme() {
+    return ThemeData.light().copyWith(
+      scaffoldBackgroundColor: const Color(0xFFF3F4F6),
+      primaryColor: const Color(0xFF9333EA),
+      cardColor: Colors.white,
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 1,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF9333EA), width: 2),
+        ),
+        contentPadding: const EdgeInsets.all(16),
+      ),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: Colors.white,
+        selectedItemColor: Color(0xFF9333EA),
+        unselectedItemColor: Colors.black54,
+        elevation: 8,
+      ),
     );
   }
 }
@@ -61,7 +140,14 @@ class Filament {
 }
 
 class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const MainScreen({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
 
   @override
   State<MainScreen> createState() => _MainScreenState();
@@ -70,24 +156,20 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   
-  // Configuración
   String igvPercentage = '';
   String profitMargin = '';
   
-  // Filamentos
   List<Filament> filaments = [
     Filament(id: 1, name: 'Filamento PLA', costPerKg: 25, brand: 'XYZ'),
     Filament(id: 2, name: 'Filamento ABS', costPerKg: 30, brand: 'ABC'),
     Filament(id: 3, name: 'Filamento PETG', costPerKg: 40, brand: 'DEF'),
   ];
   
-  // Costos base
   String electricityCost = '';
   String suppliesCost = '';
   String operatorCost = '';
   String depreciationCost = '';
   
-  // Cálculo de venta
   String printHours = '';
   Filament? selectedFilament;
   String gramsUsed = '';
@@ -184,7 +266,7 @@ class _MainScreenState extends State<MainScreen> {
         ? (selectedFilament!.costPerKg * grams) / 1000
         : 0;
 
-    final baseCost = (electricity + supplies + operator + depreciation) * hours + filamentCost;
+    final baseCost = (electricity + depreciation) * hours + filamentCost + supplies + operator;
     final profit = baseCost * (margin / 100);
     final taxes = (baseCost + profit) * (igv / 100);
     final finalPrice = baseCost + profit + taxes;
@@ -197,11 +279,26 @@ class _MainScreenState extends State<MainScreen> {
     };
   }
 
+  Color _getDrawerColor() {
+    return widget.isDarkMode ? const Color(0xFF111827) : const Color(0xFFF9FAFB);
+  }
+
+  Color _getDrawerHeaderColor() {
+    return widget.isDarkMode ? const Color(0xFF1F2937) : Colors.white;
+  }
+
+  Color _getTextColor() {
+    return widget.isDarkMode ? Colors.white : Colors.black87;
+  }
+
+  Color _getSecondaryTextColor() {
+    return widget.isDarkMode ? Colors.grey : Colors.black54;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1F2937),
         title: Text(_getTitle()),
         leading: Builder(
           builder: (context) => IconButton(
@@ -209,24 +306,65 @@ class _MainScreenState extends State<MainScreen> {
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
+        actions: [
+          IconButton(
+            icon: Icon(widget.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            onPressed: widget.onThemeToggle,
+            tooltip: widget.isDarkMode ? 'Modo Claro' : 'Modo Oscuro',
+          ),
+        ],
       ),
       drawer: Drawer(
-        backgroundColor: const Color(0xFF111827),
-        child: ListView(
-          padding: EdgeInsets.zero,
+        backgroundColor: _getDrawerColor(),
+        child: Column(
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(color: Color(0xFF1F2937)),
-              child: Text(
-                'Menú',
-                style: TextStyle(color: Colors.white, fontSize: 24),
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  DrawerHeader(
+                    decoration: BoxDecoration(color: _getDrawerHeaderColor()),
+                    child: Text(
+                      'Menú',
+                      style: TextStyle(color: _getTextColor(), fontSize: 24),
+                    ),
+                  ),
+                  _buildDrawerItem(Icons.home, 'Inicio', 0),
+                  _buildDrawerItem(Icons.attach_money, 'Calcular Venta', 1),
+                  _buildDrawerItem(Icons.settings, 'Filamentos', 2),
+                  _buildDrawerItem(Icons.monetization_on, 'Costos Base', 3),
+                  _buildDrawerItem(Icons.percent, 'Impuestos y Márgenes', 4),
+                ],
               ),
             ),
-            _buildDrawerItem(Icons.home, 'Inicio', 0),
-            _buildDrawerItem(Icons.attach_money, 'Calcular Venta', 1),
-            _buildDrawerItem(Icons.settings, 'Filamentos', 2),
-            _buildDrawerItem(Icons.monetization_on, 'Costos Base', 3),
-            _buildDrawerItem(Icons.percent, 'Impuestos y Márgenes', 4),
+            Divider(color: _getSecondaryTextColor(), height: 1),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+              child: Column(
+                children: [
+                  Text(
+                    'Síguenos en redes sociales',
+                    style: TextStyle(
+                      color: _getSecondaryTextColor(),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSocialIcon(Icons.facebook, 'https://facebook.com', const Color(0xFF1877F2)),
+                      _buildSocialIcon(Icons.camera_alt, 'https://instagram.com', const Color(0xFFE4405F)),
+                      _buildSocialIcon(Icons.play_arrow, 'https://youtube.com', const Color(0xFFFF0000)),
+                      _buildSocialIcon(Icons.alternate_email, 'https://twitter.com', const Color(0xFF1DA1F2)),
+                      _buildSocialIcon(Icons.web, 'https://tusitio.com', const Color(0xFF9333EA)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -234,9 +372,6 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: _currentIndex == 0 ? null : BottomNavigationBar(
         currentIndex: _getBottomNavIndex(),
         onTap: (index) => setState(() => _currentIndex = _getScreenIndexFromBottomNav(index)),
-        backgroundColor: const Color(0xFF1F2937),
-        selectedItemColor: const Color(0xFF9333EA),
-        unselectedItemColor: Colors.white,
         type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.attach_money), label: ''),
@@ -247,47 +382,39 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  int _getBottomNavIndex() {
-    // Mapear el índice de pantalla al índice de la barra de navegación
+  String _getTitle() {
     switch (_currentIndex) {
-      case 1: return 0; // Calcular Venta
-      case 2: return 1; // Filamentos
-      case 4: return 2; // Impuestos y Márgenes
+      case 0: return 'Calculadora de Costos de Impresión 3D';
+      case 1: return 'Calculo de Venta';
+      case 2: return 'Configuración de Filamento';
+      case 3: return 'Costos Base';
+      case 4: return 'Impuestos y Margenes de Ganancia';
+      default: return '';
+    }
+  }
+
+  int _getBottomNavIndex() {
+    switch (_currentIndex) {
+      case 1: return 0;
+      case 2: return 1;
+      case 4: return 2;
       default: return 0;
     }
   }
 
   int _getScreenIndexFromBottomNav(int bottomNavIndex) {
-    // Mapear el índice de la barra de navegación al índice de pantalla
     switch (bottomNavIndex) {
-      case 0: return 1; // Calcular Venta
-      case 1: return 2; // Filamentos
-      case 2: return 4; // Impuestos y Márgenes
+      case 0: return 1;
+      case 1: return 2;
+      case 2: return 4;
       default: return 1;
-    }
-  }
-
-  String _getTitle() {
-    switch (_currentIndex) {
-      case 0:
-        return 'Calculadora de Costos de Impresión 3D';
-      case 1:
-        return 'Calculo de Venta';
-      case 2:
-        return 'Configuración de Filamento';
-      case 3:
-        return 'Costos Base';
-      case 4:
-        return 'Impuestos y Margenes de Ganancia';
-      default:
-        return '';
     }
   }
 
   Widget _buildDrawerItem(IconData icon, String title, int index) {
     return ListTile(
-      leading: Icon(icon, color: Colors.white),
-      title: Text(title, style: const TextStyle(color: Colors.white)),
+      leading: Icon(icon, color: _getTextColor()),
+      title: Text(title, style: TextStyle(color: _getTextColor())),
       onTap: () {
         setState(() => _currentIndex = index);
         Navigator.pop(context);
@@ -295,20 +422,34 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
+  Widget _buildSocialIcon(IconData icon, String url, Color color) {
+    return InkWell(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Abriendo: $url'), duration: const Duration(seconds: 1)),
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withOpacity(0.3)),
+        ),
+        child: Icon(icon, color: color, size: 24),
+      ),
+    );
+  }
+
   Widget _buildBody() {
     switch (_currentIndex) {
-      case 0:
-        return _buildWelcomeScreen();
-      case 1:
-        return _buildCalculatorScreen();
-      case 2:
-        return _buildFilamentsScreen();
-      case 3:
-        return _buildCostsScreen();
-      case 4:
-        return _buildTaxesScreen();
-      default:
-        return Container();
+      case 0: return _buildWelcomeScreen();
+      case 1: return _buildCalculatorScreen();
+      case 2: return _buildFilamentsScreen();
+      case 3: return _buildCostsScreen();
+      case 4: return _buildTaxesScreen();
+      default: return Container();
     }
   }
 
@@ -319,16 +460,16 @@ class _MainScreenState extends State<MainScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text(
+            Text(
               'Bienvenido a la Calculadora de Costos de Impresión 3D',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: _getTextColor()),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Calcula tus costos de impresión 3D con facilidad. ¡Comienza ahora!',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey, fontSize: 16),
+              style: TextStyle(color: _getSecondaryTextColor(), fontSize: 16),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -338,14 +479,9 @@ class _MainScreenState extends State<MainScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF9333EA),
                   padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  'Comenzar',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
-                ),
+                child: const Text('Comenzar', style: TextStyle(fontSize: 18, color: Colors.white)),
               ),
             ),
           ],
@@ -355,40 +491,28 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildTaxesScreen() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Porcentaje de IGV', style: TextStyle(fontSize: 14)),
+          Text('Porcentaje de IGV', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           TextField(
             onChanged: (value) => setState(() => igvPercentage = value),
-            decoration: InputDecoration(
-              hintText: 'Ej: 18',
-            ),
-            keyboardType: TextInputType.text,
+            decoration: const InputDecoration(hintText: 'Ej: 18'),
             controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: igvPercentage,
-                selection: TextSelection.collapsed(offset: igvPercentage.length),
-              ),
+              TextEditingValue(text: igvPercentage, selection: TextSelection.collapsed(offset: igvPercentage.length)),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Margen de Ganancia', style: TextStyle(fontSize: 14)),
+          Text('Margen de Ganancia', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
           const SizedBox(height: 8),
           TextField(
             onChanged: (value) => setState(() => profitMargin = value),
-            decoration: InputDecoration(
-              hintText: 'Ej: 40',
-            ),
-            keyboardType: TextInputType.text,
+            decoration: const InputDecoration(hintText: 'Ej: 40'),
             controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: profitMargin,
-                selection: TextSelection.collapsed(offset: profitMargin.length),
-              ),
+              TextEditingValue(text: profitMargin, selection: TextSelection.collapsed(offset: profitMargin.length)),
             ),
           ),
           const SizedBox(height: 24),
@@ -399,9 +523,7 @@ class _MainScreenState extends State<MainScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9333EA),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Guardar', style: TextStyle(color: Colors.white)),
             ),
@@ -419,44 +541,33 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Horas de Impresión', style: TextStyle(fontSize: 14)),
+          Text('Horas de Impresión', style: TextStyle(fontSize: 14, color: _getTextColor())),
           const SizedBox(height: 8),
           TextField(
             onChanged: (value) => setState(() => printHours = value),
             decoration: const InputDecoration(hintText: '0'),
-            keyboardType: TextInputType.text,
             controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: printHours,
-                selection: TextSelection.collapsed(offset: printHours.length),
-              ),
+              TextEditingValue(text: printHours, selection: TextSelection.collapsed(offset: printHours.length)),
             ),
           ),
           const SizedBox(height: 16),
-          const Text('Filamento', style: TextStyle(fontSize: 14)),
+          Text('Filamento', style: TextStyle(fontSize: 14, color: _getTextColor())),
           const SizedBox(height: 8),
           DropdownButtonFormField<Filament>(
             value: selectedFilament,
             decoration: const InputDecoration(),
             hint: const Text('Seleccionar'),
-            items: filaments.map((f) => DropdownMenuItem(
-              value: f,
-              child: Text(f.name),
-            )).toList(),
+            items: filaments.map((f) => DropdownMenuItem(value: f, child: Text(f.name))).toList(),
             onChanged: (value) => setState(() => selectedFilament = value),
           ),
           const SizedBox(height: 16),
-          const Text('Gramos a Usar', style: TextStyle(fontSize: 14)),
+          Text('Gramos a Usar', style: TextStyle(fontSize: 14, color: _getTextColor())),
           const SizedBox(height: 8),
           TextField(
             onChanged: (value) => setState(() => gramsUsed = value),
             decoration: const InputDecoration(hintText: '0'),
-            keyboardType: TextInputType.text,
             controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: gramsUsed,
-                selection: TextSelection.collapsed(offset: gramsUsed.length),
-              ),
+              TextEditingValue(text: gramsUsed, selection: TextSelection.collapsed(offset: gramsUsed.length)),
             ),
           ),
           const SizedBox(height: 24),
@@ -464,26 +575,22 @@ class _MainScreenState extends State<MainScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF1F2937),
+              color: Theme.of(context).cardColor,
               borderRadius: BorderRadius.circular(12),
+              boxShadow: widget.isDarkMode ? [] : [
+                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2)),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Resumen',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
+                Text('Resumen', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _getTextColor())),
                 const SizedBox(height: 16),
                 _buildPriceRow('Costo Base Total', prices['baseCost']!),
                 _buildPriceRow('Ganancia', prices['profit']!),
                 _buildPriceRow('Impuestos', prices['taxes']!),
-                const Divider(color: Colors.grey, height: 24),
-                _buildPriceRow(
-                  'Precio Final de Venta',
-                  prices['finalPrice']!,
-                  isTotal: true,
-                ),
+                Divider(color: _getSecondaryTextColor(), height: 24),
+                _buildPriceRow('Precio Final de Venta', prices['finalPrice']!, isTotal: true),
               ],
             ),
           ),
@@ -501,7 +608,7 @@ class _MainScreenState extends State<MainScreen> {
           Text(
             label,
             style: TextStyle(
-              color: isTotal ? Colors.white : Colors.grey,
+              color: isTotal ? _getTextColor() : _getSecondaryTextColor(),
               fontSize: isTotal ? 16 : 14,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
             ),
@@ -509,7 +616,7 @@ class _MainScreenState extends State<MainScreen> {
           Text(
             '\$${value.toStringAsFixed(2)}',
             style: TextStyle(
-              color: isTotal ? const Color(0xFF9333EA) : Colors.white,
+              color: isTotal ? const Color(0xFF9333EA) : _getTextColor(),
               fontSize: isTotal ? 16 : 14,
               fontWeight: FontWeight.bold,
             ),
@@ -529,36 +636,25 @@ class _MainScreenState extends State<MainScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Añadir Filamento',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          // Text('Añadir Filamento', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _getTextColor())),
+          // const SizedBox(height: 16),
+          Text('Nombre del Filamento', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          TextField(controller: nameController, decoration: const InputDecoration(hintText: 'Ej: PLA Premium')),
           const SizedBox(height: 16),
-          TextField(
-            controller: nameController,
-            decoration: const InputDecoration(hintText: 'Nombre del Filamento'),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: costController,
-            decoration: const InputDecoration(hintText: 'Costo por Kilogramo'),
-            keyboardType: TextInputType.text,
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: brandController,
-            decoration: const InputDecoration(hintText: 'Marca'),
-          ),
+          Text('Costo por Kilogramo', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          TextField(controller: costController, decoration: const InputDecoration(hintText: 'Ej: 25')),
+          const SizedBox(height: 16),
+          Text('Marca', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          TextField(controller: brandController, decoration: const InputDecoration(hintText: 'Ej: XYZ')),
           const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                _addFilament(
-                  nameController.text,
-                  costController.text,
-                  brandController.text,
-                );
+                _addFilament(nameController.text, costController.text, brandController.text);
                 nameController.clear();
                 costController.clear();
                 brandController.clear();
@@ -568,24 +664,22 @@ class _MainScreenState extends State<MainScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9333EA),
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
-            'Filamentos Existentes',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          ),
+          Text('Filamentos Existentes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: _getTextColor())),
           const SizedBox(height: 16),
           ...filaments.map((f) => Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1F2937),
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
+                  boxShadow: widget.isDarkMode ? [] : [
+                    BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 2)),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -593,28 +687,13 @@ class _MainScreenState extends State<MainScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            f.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                          Text(f.name, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: _getTextColor())),
                           const SizedBox(height: 4),
-                          Text(
-                            'Costo: \$${f.costPerKg}/kg, Marca: ${f.brand}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
-                          ),
+                          Text('Costo: \${f.costPerKg}/kg, Marca: ${f.brand}', style: TextStyle(color: _getSecondaryTextColor(), fontSize: 14)),
                         ],
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => _deleteFilament(f.id),
-                    ),
+                    IconButton(icon: const Icon(Icons.delete, color: Colors.red), onPressed: () => _deleteFilament(f.id)),
                   ],
                 ),
               )),
@@ -624,64 +703,68 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Widget _buildCostsScreen() {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         children: [
-          TextField(
-            onChanged: (value) => setState(() => electricityCost = value),
-            decoration: const InputDecoration(
-              hintText: 'Costo por hora de energía eléctrica',
-            ),
-            keyboardType: TextInputType.text,
-            controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: electricityCost,
-                selection: TextSelection.collapsed(offset: electricityCost.length),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Costo por hora de energía eléctrica', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                onChanged: (value) => setState(() => electricityCost = value),
+                decoration: const InputDecoration(hintText: 'Ej: 0.5'),
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(text: electricityCost, selection: TextSelection.collapsed(offset: electricityCost.length)),
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
-          TextField(
-            onChanged: (value) => setState(() => suppliesCost = value),
-            decoration: const InputDecoration(
-              hintText: 'Costo por hora de insumos para postprocesado',
-            ),
-            keyboardType: TextInputType.text,
-            controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: suppliesCost,
-                selection: TextSelection.collapsed(offset: suppliesCost.length),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Costo de insumos para postprocesado (único)', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                onChanged: (value) => setState(() => suppliesCost = value),
+                decoration: const InputDecoration(hintText: 'Ej: 2'),
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(text: suppliesCost, selection: TextSelection.collapsed(offset: suppliesCost.length)),
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
-          TextField(
-            onChanged: (value) => setState(() => operatorCost = value),
-            decoration: const InputDecoration(
-              hintText: 'Costo por hora de operario',
-            ),
-            keyboardType: TextInputType.text,
-            controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: operatorCost,
-                selection: TextSelection.collapsed(offset: operatorCost.length),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Costo de operario (único)', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                onChanged: (value) => setState(() => operatorCost = value),
+                decoration: const InputDecoration(hintText: 'Ej: 5'),
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(text: operatorCost, selection: TextSelection.collapsed(offset: operatorCost.length)),
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 16),
-          TextField(
-            onChanged: (value) => setState(() => depreciationCost = value),
-            decoration: const InputDecoration(
-              hintText: 'Costo por hora de depreciación del equipo',
-            ),
-            keyboardType: TextInputType.text,
-            controller: TextEditingController.fromValue(
-              TextEditingValue(
-                text: depreciationCost,
-                selection: TextSelection.collapsed(offset: depreciationCost.length),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Costo por hora de depreciación del equipo', style: TextStyle(fontSize: 14, color: _getTextColor(), fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              TextField(
+                onChanged: (value) => setState(() => depreciationCost = value),
+                decoration: const InputDecoration(hintText: 'Ej: 0.3'),
+                controller: TextEditingController.fromValue(
+                  TextEditingValue(text: depreciationCost, selection: TextSelection.collapsed(offset: depreciationCost.length)),
+                ),
               ),
-            ),
+            ],
           ),
           const SizedBox(height: 24),
           SizedBox(
@@ -691,9 +774,7 @@ class _MainScreenState extends State<MainScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF9333EA),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
               child: const Text('Guardar', style: TextStyle(color: Colors.white)),
             ),
