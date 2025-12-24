@@ -12,9 +12,29 @@ dependencies:
   shared_preferences: ^2.5.4
   url_launcher: ^6.2.2
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/app_icon.png"
+  
+  # Para Android Adaptivo (desde Android 8.0)
+  # adaptive_icon_background: "#9333EA"  # Tu color morado
+  # adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  
+  # Para iOS
+  remove_alpha_ios: true
+  
+  # Para Web
+  web:
+    generate: true
+    image_path: "assets/icon/app_icon.png"
+    background_color: "#9333EA"
+    theme_color: "#9333EA"
