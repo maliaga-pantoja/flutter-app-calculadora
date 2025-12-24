@@ -354,11 +354,10 @@ class _MainScreenState extends State<MainScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildSocialIcon(Icons.facebook, 'https://facebook.com', const Color(0xFF1877F2)),
-                      _buildSocialIcon(Icons.camera_alt, 'https://instagram.com', const Color(0xFFE4405F)),
-                      _buildSocialIcon(Icons.play_arrow, 'https://youtube.com', const Color(0xFFFF0000)),
-                      _buildSocialIcon(Icons.alternate_email, 'https://twitter.com', const Color(0xFF1DA1F2)),
-                      _buildSocialIcon(Icons.web, 'https://tusitio.com', const Color(0xFF9333EA)),
+                      _buildSocialIcon(Icons.facebook, 'https://www.facebook.com/profile.php?id=61563590882317', const Color(0xFF1877F2)),
+                      _buildSocialIcon(Icons.camera_alt, 'https://www.instagram.com/creacionesjojo/', const Color(0xFFE4405F)),
+                      _buildSocialIcon(Icons.play_arrow, 'https://www.youtube.com/@creacionesjojoperu', const Color(0xFFFF0000)),
+                      _buildSocialIcon(Icons.tiktok, 'https://www.tiktok.com/@creacionesjojo.peru', const Color.fromARGB(255, 46, 45, 48)),
                     ],
                   ),
                   const SizedBox(height: 8),
