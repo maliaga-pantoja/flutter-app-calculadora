@@ -1,5 +1,5 @@
 name: calculadora
-description: "A new Flutter project."
+description: "Simple calculator for 3d print costs estimation"
 publish_to: 'none'
 version: 0.1.0
 
@@ -12,7 +12,7 @@ dependencies:
   shared_preferences: ^2.5.4
   url_launcher: ^6.2.2
 dev_dependencies:
-  flutter_launcher_icons: ^0.13.1
+  flutter_launcher_icons: ^0.14.4
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
