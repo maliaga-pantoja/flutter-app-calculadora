@@ -15,7 +15,7 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0; // Ahora 0 = Filamentos (primera pantalla)
+  int _currentIndex = 0; // 0 = Home/Inicio (primera pantalla)
   bool _isDarkMode = true;
 
   @override
@@ -40,11 +40,11 @@ class _MainScreenState extends State<MainScreen> {
 
   String _getTitle() {
     const titles = [
-      'Configuración de Filamento',      // 0 - Primera pantalla
-      'Costos Base',                      // 1 - Segunda pantalla
-      'Impuestos y Margenes de Ganancia', // 2 - Tercera pantalla
-      'Calculo de Venta',                 // 3 - Cuarta pantalla
-      'Inicio',                           // 4 - Pantalla de bienvenida (opcional)
+      'Calculadora de Costos de Impresión 3D', // 0 - Home/Inicio
+      'Configuración de Filamento',             // 1 - Filamentos
+      'Costos Base',                            // 2 - Costos
+      'Impuestos y Margenes de Ganancia',       // 3 - Impuestos
+      'Calculo de Venta',                       // 4 - Calcular
     ];
     return titles[_currentIndex];
   }
@@ -52,17 +52,17 @@ class _MainScreenState extends State<MainScreen> {
   Widget _buildBody() {
     switch (_currentIndex) {
       case 0:
-        return const FilamentsScreen();
+        return WelcomeScreen(onStart: () => _onNavigate(1)); // Al hacer clic va a Filamentos
       case 1:
-        return const CostsScreen();
-      case 2:
-        return const TaxesScreen();
-      case 3:
-        return const CalculatorScreen();
-      case 4:
-        return WelcomeScreen(onStart: () => _onNavigate(0));
-      default:
         return const FilamentsScreen();
+      case 2:
+        return const CostsScreen();
+      case 3:
+        return const TaxesScreen();
+      case 4:
+        return const CalculatorScreen();
+      default:
+        return WelcomeScreen(onStart: () => _onNavigate(1));
     }
   }
 
@@ -87,38 +87,54 @@ class _MainScreenState extends State<MainScreen> {
           onNavigate: _onNavigate,
         ),
         body: _buildBody(),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _getBottomNavIndex(),
-          onTap: (index) => _onNavigate(index),
-          type: BottomNavigationBarType.fixed,
-          items: const [
-            BottomNavigationBarItem(
-              icon: Icon(Icons.settings),
-              label: 'Filamentos',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.monetization_on),
-              label: 'Costos',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.percent),
-              label: 'Impuestos',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.attach_money),
-              label: 'Calcular',
-            ),
-          ],
-        ),
+        bottomNavigationBar: _currentIndex == 0 
+            ? null // No mostrar bottom nav en la pantalla de inicio
+            : BottomNavigationBar(
+                currentIndex: _getBottomNavIndex(),
+                onTap: (index) => _onNavigate(_getScreenIndexFromBottomNav(index)),
+                type: BottomNavigationBarType.fixed,
+                items: const [
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.settings),
+                    label: 'Filamentos',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.monetization_on),
+                    label: 'Costos',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.percent),
+                    label: 'Impuestos',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.attach_money),
+                    label: 'Calcular',
+                  ),
+                ],
+              ),
       ),
     );
   }
 
   int _getBottomNavIndex() {
     // Mapea el índice actual al índice del bottom nav
-    if (_currentIndex >= 0 && _currentIndex <= 3) {
-      return _currentIndex;
+    switch (_currentIndex) {
+      case 1: return 0; // Filamentos
+      case 2: return 1; // Costos
+      case 3: return 2; // Impuestos
+      case 4: return 3; // Calcular
+      default: return 0;
     }
-    return 0;
+  }
+
+  int _getScreenIndexFromBottomNav(int bottomNavIndex) {
+    // Mapea el índice del bottom nav al índice de la pantalla
+    switch (bottomNavIndex) {
+      case 0: return 1; // Filamentos
+      case 1: return 2; // Costos
+      case 2: return 3; // Impuestos
+      case 3: return 4; // Calcular
+      default: return 1;
+    }
   }
 }

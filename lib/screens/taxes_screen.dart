@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../widgets/custom_text_field.dart';
+import '../utils/message_helper.dart';
 
 class TaxesScreen extends StatefulWidget {
   const TaxesScreen({super.key});
@@ -28,11 +29,7 @@ class _TaxesScreenState extends State<TaxesScreen> {
       config['igvPercentage'] ?? '',
       config['profitMargin'] ?? '',
     );
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuración guardada correctamente')),
-      );
-    }
+    MessageHelper.showSuccess(context, 'Configuración guardada correctamente');
   }
 
   @override

@@ -49,35 +49,12 @@ class _SplashScreenState extends State<SplashScreen>
       body: Center(
         child: FadeTransition(
           opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Image.asset(
-                  'assets/logo.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-              // const SizedBox(height: 40),
-              // const Text(
-              //   'Calculadora 3D',
-              //   style: TextStyle(
-              //     color: Colors.white,
-              //     fontSize: 28,
-              //     fontWeight: FontWeight.bold,
-              //   ),
-              // ),
-              // const SizedBox(height: 10),
-              // const Text(
-              //   'Creaciones JoJo',
-              //   style: TextStyle(
-              //     color: Color(0xFF9333EA),
-              //     fontSize: 16,
-              //     fontWeight: FontWeight.w500,
-              //   ),
-              // ),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
+            child: Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+            ),
           ),
         ),
       ),

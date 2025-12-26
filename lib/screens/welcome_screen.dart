@@ -17,6 +17,15 @@ class WelcomeScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Logo
+            // Padding(
+            //   padding: const EdgeInsets.symmetric(horizontal: 40),
+            //   child: Image.asset(
+            //     'assets/logo.png',
+            //     fit: BoxFit.contain,
+            //   ),
+            // ),
+            const SizedBox(height: 40),
             Text(
               'Bienvenido a la Calculadora de Costos de Impresión 3D',
               textAlign: TextAlign.center,

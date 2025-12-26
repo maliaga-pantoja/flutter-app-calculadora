@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/storage_service.dart';
 import '../widgets/custom_text_field.dart';
+import '../utils/message_helper.dart';
 
 class CostsScreen extends StatefulWidget {
   const CostsScreen({super.key});
@@ -25,11 +26,7 @@ class _CostsScreenState extends State<CostsScreen> {
 
   Future<void> _saveCosts() async {
     await StorageService.saveCosts(costs);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Costos guardados correctamente')),
-      );
-    }
+    MessageHelper.showSuccess(context, 'Costos guardados correctamente');
   }
 
   @override
